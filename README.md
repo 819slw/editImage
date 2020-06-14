@@ -12,7 +12,7 @@
 
     import editImage from 'edit-draw-image'
 
-    <editImage :oldImage="img" v-model="base64Src"></editImage>
+    <editImage :oldImage="img" v-model="base64Src" @closeDialog="closeDialog"></editImage>
 
     oldImage 参数如果是网络图片 直接传递网络地址，如果是本地图片请传递require('图片地址')
 

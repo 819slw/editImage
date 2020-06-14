@@ -234,6 +234,10 @@ export default {
   justify-content: center;
   align-items: center;
   background: rgba(0,0,0, .5);
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 9999;
   #inputWrapper{
     display: flex;
     justify-content: center;

@@ -2,7 +2,7 @@
   "name": "edit-draw-image",
   "main": "dist/editImage.js",
   "description": "实现了在图片上随意输入文字以及做标记",
-  "version": "1.0.4",
+  "version": "1.0.5",
   "author": "slw <3289360550@qq.com>",
   "license": "MIT",
   "private": false,
