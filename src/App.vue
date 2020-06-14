@@ -1,14 +1,31 @@
 <template>
   <div id="app">
-    <editImage></editImage>
+    <!-- <editImage :oldImage="img" model.sync="base64Src"></editImage> -->
+    <editImage 
+      :oldImage="img" 
+      v-model="base64Src"
+      @closeDialog="closeDialog"
+      ></editImage>
   </div>
 </template>
 
 <script>
 export default {
   name: 'app',
+  watch:{
+    'base64Src': function(n,o) {
+      console.log(n)
+    }
+  },
+  methods: {
+    closeDialog(){
+
+    }
+  },
   data () {
     return {
+      base64Src: '',
+      img: require('./assets/timg.jpg')
     }
   }
 }
@@ -21,9 +38,11 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  margin-top: 60px;
 }
-
+body{
+  padding: 0;
+  margin: 0;
+}
 h1, h2 {
   font-weight: normal;
 }

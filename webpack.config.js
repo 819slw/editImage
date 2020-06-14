@@ -4,6 +4,7 @@ function resolve(dir) {
   return path.join(__dirname, '..', dir)
 }
 module.exports = {
+  // 生产环境
   entry: './src/lib/index.js',
   output: {
     path: path.resolve(__dirname, './dist'),
@@ -13,6 +14,14 @@ module.exports = {
     libraryTarget: 'umd',
     umdNamedDefine: true
   },
+  // 开发环境
+  // entry: './src/main.js',
+  // output: {
+  //   path: path.resolve(__dirname, './dist'),
+  //   publicPath: '/dist/',
+  //   filename: 'build.js'
+  // },
+
   module: {
     rules: [
       // {

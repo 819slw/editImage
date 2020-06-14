@@ -4,8 +4,8 @@
     <canvas :width="canvasObj.width" :height="canvasObj.height" v-if="isShowCanvas" id="edit-Image-slw"></canvas>
     <div class="eraserWrapper">
       <ul class="eraserList">
-        <li class="eraserItem" 
-          v-for="(item,index) in eraserList" 
+        <li class="eraserItem"
+          v-for="(item,index) in eraserList"
           :key="index"
           @click="item.callBack()"
           >
@@ -13,7 +13,11 @@
         </li>
       </ul>
     </div>
-    <input type="text" id="ctxInput"/>
+    <div v-if="isShowInput" id="inputWrapper">
+      <input type="text" id="ctxInput"/>
+      <span @click.stop="cancleInput()" class="operatBtn">取消</span>
+      <span @click.stop="confrimInput()" class="operatBtn">确认</span>
+    </div>
   </div>
 </template>
 
@@ -22,11 +26,20 @@ var ctxSlw = null
 var domCanvas = null
 export default {
   name: 'editImage',
+  props:{
+    'value': {
+      type: '',
+      default: () => ''
+    },
+    'oldImage': {
+      type: String,
+      default: () => ''
+    }
+  },
   data () {
     return {
+      isShowInput: false,
       isAllow: false,
-      oldImage: require('../assets/timg.jpg'), // 接收过来的图片 作为canvas的背景图片
-      // oldImage: './assets/timg.jpg', // 接收过来的图片 作为canvas的背景图片
       nowImage: '',  // 将来由canvas生成的新图片
       isShowCanvas: false,
       eraserList:[
@@ -52,14 +65,28 @@ export default {
           }
         },
         {
-          name: '橡皮',
-          pic: '橡皮'
+          name: '完成',
+          pic: '完成',
+          callBack: () => {
+            if(this.isAllow){
+              this.getBaseContent()
+            }
+          }
         },
         {
-          name: '橡皮',
-          pic: '橡皮'
+          name: '取消',
+          pic: '取消',
+          callBack: () => {
+            if(this.isAllow){
+              this.cancleDialog()
+            }
+          }
         }
       ],
+      nowClient: {
+        x: 0,
+        y: 0
+      },
       canvasObj: {
         width: 0,
         height: 0
@@ -82,27 +109,45 @@ export default {
     }
   },
   methods: {
+    cancleDialog(){
+      this.$emit('closeDialog')
+    },
+    getBaseContent(){
+      this.$emit('input', domCanvas.toDataURL())
+    },
+    cancleInput(){
+      let inputDom = document.getElementById('ctxInput')
+      inputDom.value = ''
+      this.isShowInput = false
+    },
+    confrimInput(){
+      let inputDom = document.getElementById('ctxInput')
+      ctxSlw.font= 'bold 24px sans-serif'
+      ctxSlw.fillStyle = 'red'
+      ctxSlw.fillText(inputDom.value, this.getBoundingClientRect(this.nowClient.x,this.nowClient.y).x,this.getBoundingClientRect(this.nowClient.x,this.nowClient.y).y)
+    },
     // 初始化 input框
     _initInput(event){
-      // 这里存在两个x和y值：1.input的位移。 和input在canvas的位移
-      let inputDom = document.getElementById('ctxInput')
-      let that = this
-      document.onmousedown = function(e){
-        inputDom.style.left = e.clientX + 'px'
-        inputDom.style.top = e.clientY + 'px'
-      }
+      this.isShowInput = true
+      this.$nextTick(() => {
+        // 这里存在两个x和y值：1.input的位移。 和input在canvas的位移
+        let inputDom = document.getElementById('inputWrapper')
+        let that = this
 
-      // 设置文件
-      domCanvas.onmousedown = function(e){
-        ctxSlw.font= 'bold 24px sans-serif'
-        ctxSlw.fillStyle = 'red'
-        ctxSlw.fillText(inputDom.value, that.getBoundingClientRect(e.clientX,e.clientY).x,that.getBoundingClientRect(e.clientX,e.clientY).y)
-      }
+        domCanvas.onmousedown = (e) =>{
+          this.nowClient.x = e.clientX
+          this.nowClient.y = e.clientY
+          inputDom.style.left = e.clientX + 'px'
+          inputDom.style.top = e.clientY + 'px'
+        }
+      })
     },
     // 初始化 橡皮
     _initEraser(){
       let that = this
       ctxSlw.lineWidth = 20
+      ctxSlw.lineCap = 'round'  
+      ctxSlw.lineJoin ="round"
       // ctxSlw.strokeStyle = 'blue'     //画笔颜色  
       ctxSlw.globalCompositeOperation = "destination-out"
       let drawing = false
@@ -181,16 +226,7 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-#ctxInput{
-  position: fixed;
-  background: rgba(0,0,0,0);
-  outline: none;
-  border:1px solid #000;
-  width: 200px;
-  height: 20px;
-  color: red;
-  font-size: 16px;
-}
+
 #editImage{
   width: 100vw;
   height: 100vh;
@@ -198,6 +234,31 @@ export default {
   justify-content: center;
   align-items: center;
   background: rgba(0,0,0, .5);
+  #inputWrapper{
+    display: flex;
+    justify-content: center;
+    padding: 3px;
+    position: fixed;
+    background: #fff;
+    z-index: 100;
+    .operatBtn{
+      font-size: 12px;
+      background: #eee;
+      border-radius: 3px;
+      margin-left: 10px;
+      padding: 3px 5px;
+      cursor: pointer;
+    }
+    #ctxInput{
+      background: rgba(0,0,0,0);
+      outline: none;
+      border:1px solid #000;
+      width: 200px;
+      height: 20px;
+      color: red;
+      font-size: 16px;
+    }
+  }
   .eraserWrapper{
     background: rgba(0,0,0, .5);
     padding: 5px;
