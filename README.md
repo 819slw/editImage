@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-07-29 17:59:12
- * @LastEditTime: 2021-07-16 10:41:12
+ * @LastEditTime: 2021-07-29 13:03:46
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /editImage/README.md
@@ -18,12 +18,22 @@
 
   import editImage from 'edit-draw-image'
 
-  <editImage :oldImage="img" v-model="base64Src" @closeDialog="closeDialog"></editImage>
+  <editImage :oldImage="img" @setImgBase64=“setImgBase64”></editImage>
 
-  oldImage 参数如果是网络图片 直接传递网络地址，如果是本地图片请传递require('图片地址')
+  oldImage:
+    1.type:Array
 
-  oldImage: 初始图片，可以是网络图片
-  base64Src: 实时保存图片数据，base64。可以watch监听这个值
-  closeDialog: 关闭dialog的回调
+  setImgBase64:
+    1.切换图片时如果用户有更改会调用 setImgBase64 方法，参数为：(base64,index)
+
+  saveImg:
+    1.内置函数
+    2.留给用户主动调用这个方法去获取图片上的绘制数据
+    3.如果有绘制痕迹就会返回base64，如果没有就返回空字符
+
 
 ```
+
+<!-- 发布npm包失败 -->
+
+**npm config set registry https://registry.npmjs.org/**

@@ -1,8 +1,8 @@
 {
   "name": "edit-draw-image",
   "main": "dist/editImage.js",
-  "description": "实现了在图片上随意输入文字以及做标记",
-  "version": "1.0.10",
+  "description": "完善图片切换",
+  "version": "1.0.12",
   "author": "slw <3289360550@qq.com>",
   "license": "MIT",
   "private": false,

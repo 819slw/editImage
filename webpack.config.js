@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-07-29 17:59:12
- * @LastEditTime: 2021-07-29 09:52:11
+ * @LastEditTime: 2021-07-29 13:04:29
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /editImage/webpack.config.js
@@ -13,22 +13,23 @@ function resolve(dir) {
 }
 module.exports = {
   // 生产环境
-  // entry: './src/lib/index.js',
-  // output: {
-  //   path: path.resolve(__dirname, './dist'),
-  //   publicPath: '/dist/',
-  //   filename: 'editImage.js',
-  //   library: 'editImage',
-  //   libraryTarget: 'umd',
-  //   umdNamedDefine: true
-  // },
-  // 开发环境
-  entry: "./src/main.js",
+  entry: "./src/lib/index.js",
   output: {
     path: path.resolve(__dirname, "./dist"),
     publicPath: "/dist/",
-    filename: "build.js",
+    filename: "editImage.js",
+    library: "editImage",
+    libraryTarget: "umd",
+    umdNamedDefine: true,
   },
+
+  // 开发环境
+  // entry: "./src/main.js",
+  // output: {
+  //   path: path.resolve(__dirname, "./dist"),
+  //   publicPath: "/dist/",
+  //   filename: "build.js",
+  // },
 
   module: {
     rules: [

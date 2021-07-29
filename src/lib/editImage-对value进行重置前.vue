@@ -33,25 +33,6 @@
         <!-- <li class="eraserItem" @click="last">前进</li> -->
       </div>
     </div>
-
-    <!-- 图片缩略图 -->
-    <div class="previewImg">
-      <img
-        @click="switchImgIndex(index)"
-        :class="{ active: nowIndex == index }"
-        v-for="(item, index) in oldImage"
-        :key="index"
-        :src="item"
-        alt=""
-      />
-    </div>
-    <!-- 切换图片 -->
-    <div @click="switchImg(0)" class="switchBtn switchBtnL">
-      <i class="ri-arrow-left-s-line"></i>
-    </div>
-    <div @click="switchImg(1)" class="switchBtn switchBtnR">
-      <i class="ri-arrow-right-s-line"></i>
-    </div>
     <!-- 输入框 -->
     <div v-if="isShowInput" id="inputWrapper">
       <input type="text" id="ctxInput" />
@@ -81,16 +62,12 @@ export default {
       default: () => "",
     },
     oldImage: {
-      type: Array,
-      default: () => [],
+      type: String,
+      default: () => "",
     },
   },
   data() {
     return {
-      isDrawed: false,
-      cw1: 0,
-      ch1: 0,
-      nowIndex: 0,
       isCanvas: true, // 是否可以绘制。考虑到是两层canvas
       rotateDeg: 0,
       isShowInput: false,
@@ -180,11 +157,6 @@ export default {
       },
     };
   },
-  watch: {
-    nowIndex(n) {
-      this.initCanvasContext();
-    },
-  },
   mounted() {
     //首先第一步是设置canvas的高度和宽度
     // 首先是获取最外层容器的宽度:w1和高度:h1
@@ -192,63 +164,34 @@ export default {
     let w1 = dom.clientWidth;
     let h1 = dom.clientHeight;
     // 拿到w1和w2之后，计算出canvas的实际宽度:cw1和高度ch1
-    this.cw1 = w1 - 32; // 根据UI的设定减去两边的padding: 16px
-    this.ch1 = h1 - 96 - this.otherHeight; // 96 是底部的工作区， this.otherHeight是顶部你们slot插入的容器高度，默认是0
+    let cw1 = w1 - 32; // 根据UI的设定减去两边的padding: 16px
+    let ch1 = h1 - 96 - this.otherHeight; // 96 是底部的工作区， this.otherHeight是顶部你们slot插入的容器高度，默认是0
 
-    let resultImgDom = document.querySelector("#resultImg");
-    resultImgDom.style.width = this.cw1 + "px";
-    resultImgDom.style.height = this.ch1 + "px";
-
-    this.$nextTick(() => {
-      this.initCanvasContext();
-    });
+    let img = new Image();
+    img.setAttribute("crossOrigin", "anonymous");
+    img.onload = () => {
+      // this.canvasObj.width = img.naturalWidth;
+      // this.canvasObj.height = img.naturalHeight;
+      this.canvasObj.width = cw1;
+      this.canvasObj.height = ch1;
+      this.isShowCanvas = true;
+      this.$nextTick(() => {
+        //  获取 画布canvas
+        domCanvas = document.getElementById("edit-Image-slw");
+        // 获取底层的图片canvas
+        domCanvas1 = document.getElementById("edit-Image-bottom");
+        // 后去底层的图片canvas 2d对象
+        if (domCanvas) ctxSlw = domCanvas.getContext("2d");
+        if (domCanvas1) ctxSlw1 = domCanvas1.getContext("2d");
+        this.fillImgToCanvas(img);
+        this.isAllow = true;
+        this._initFun();
+      });
+    };
+    img.src = this.oldImage;
     this.watchScreen();
   },
   methods: {
-    setImgBase64() {
-      if (this.isDrawed) {
-        this.$emit("setImgBase64", this.saveImg(), this.nowIndex);
-      }
-    },
-    switchImgIndex(index) {
-      this.nowIndex = index;
-    },
-    switchImg(type) {
-      if (type == 0) {
-        this.nowIndex = this.nowIndex - 1 > -1 ? this.nowIndex - 1 : 0;
-      } else {
-        this.nowIndex =
-          this.nowIndex + 1 <= this.oldImage.length - 1
-            ? this.nowIndex + 1
-            : this.oldImage.length - 1;
-      }
-      this.setImgBase64();
-    },
-    initCanvasContext() {
-      // 初始化一些变量
-      this.isDrawed = false;
-
-      let img = new Image();
-      img.setAttribute("crossOrigin", "anonymous");
-      img.onload = () => {
-        this.canvasObj.width = this.cw1;
-        this.canvasObj.height = this.ch1;
-        this.isShowCanvas = true;
-        this.$nextTick(() => {
-          //  获取 画布canvas
-          domCanvas = document.getElementById("edit-Image-slw");
-          // 获取底层的图片canvas
-          domCanvas1 = document.getElementById("edit-Image-bottom");
-          // 后去底层的图片canvas 2d对象
-          if (domCanvas) ctxSlw = domCanvas.getContext("2d");
-          if (domCanvas1) ctxSlw1 = domCanvas1.getContext("2d");
-          this.fillImgToCanvas(img);
-          this.isAllow = true;
-          this._initFun();
-        });
-      };
-      img.src = this.oldImage[this.nowIndex];
-    },
     next() {
       this.recordOperate(0);
     },
@@ -290,13 +233,9 @@ export default {
       // dom1.style.transform = `rotate(${this.rotateDeg}deg)`;
     },
     saveImg() {
-      if (this.isDrawed) {
-        ctxSlw1.drawImage(domCanvas, 0, 0);
-        let base64 = domCanvas1.toDataURL();
-        return base64;
-      } else {
-        return "";
-      }
+      ctxSlw1.drawImage(domCanvas, 0, 0);
+      let base64 = domCanvas1.toDataURL();
+      return base64;
     },
     watchScreen() {
       let dom = document.querySelector("#editImage");
@@ -394,9 +333,6 @@ export default {
         ctxSlw.lineWidth = penWeight; //画笔粗细
 
         domCanvas.onmousemove = function (e) {
-          // 开始绘制意味着我需要提供出去base64
-          this.isDrawed = true;
-
           /*找到鼠标（画笔）的坐标*/
 
           var move_x =
@@ -519,41 +455,16 @@ export default {
 
 <style lang="scss" scoped>
 #editImage {
-  // width: 1036px;
-  // height: 645px;
-  width: 100%;
-  height: 100%;
+  width: 1036px;
+  height: 645px;
   background: rgba(0, 0, 0, 0.5);
   background: #262626;
   padding: 16px;
   position: relative;
   box-sizing: border-box;
-  .switchBtnL {
-    left: 32px;
-  }
-  .switchBtnR {
-    right: 32px;
-  }
-  .switchBtn {
-    cursor: pointer;
-    z-index: 10002;
-    position: absolute;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    width: 44px;
-    height: 44px;
-    border-radius: 50%;
-    top: calc(50% - 44px);
-    background: rgba(0, 0, 0, 0.25);
-    i {
-      color: #fff;
-      font-size: 20px;
-    }
-  }
   #resultImg {
-    width: auto;
-    height: auto;
+    width: 1200px;
+    height: 799px;
   }
   .canvasWrapper {
     position: relative;
@@ -594,22 +505,6 @@ export default {
       height: 20px;
       color: red;
       font-size: 16px;
-    }
-  }
-  .previewImg {
-    position: absolute;
-    left: 16px;
-    bottom: 0;
-    .active {
-      border: 4px solid #fa541c;
-    }
-    img {
-      cursor: pointer;
-      width: 64px;
-      height: 64px;
-      margin-right: 16px;
-      border-radius: 4px;
-      box-sizing: border-box;
     }
   }
   .eraserWrapper {
