@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-07-29 17:59:12
- * @LastEditTime: 2021-07-29 13:04:29
+ * @LastEditTime: 2021-08-04 13:47:45
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /editImage/webpack.config.js
@@ -20,7 +20,7 @@ module.exports = {
     filename: "editImage.js",
     library: "editImage",
     libraryTarget: "umd",
-    umdNamedDefine: true,
+    umdNamedDefine: true
   },
 
   // 开发环境
@@ -28,7 +28,7 @@ module.exports = {
   // output: {
   //   path: path.resolve(__dirname, "./dist"),
   //   publicPath: "/dist/",
-  //   filename: "build.js",
+  //   filename: "build.js"
   // },
 
   module: {
@@ -44,14 +44,14 @@ module.exports = {
         test: /\.vue$/,
         loader: "vue-loader",
         options: {
-          loaders: {},
+          loaders: {}
           // other vue-loader options go here
-        },
+        }
       },
       {
         test: /\.js$/,
         loader: "babel-loader",
-        exclude: /node_modules/,
+        exclude: /node_modules/
       },
       // {
       //   test: /\.(png|jpg|gif|svg)$/,
@@ -62,12 +62,12 @@ module.exports = {
       // },
       {
         test: /\.sass$/,
-        loaders: ["style", "css", "sass"],
+        loaders: ["style", "css", "sass"]
       },
       {
         // 处理css资源
         test: /\.css$/,
-        use: ["style-loader", "css-loader"],
+        use: ["style-loader", "css-loader"]
       },
       {
         // 处理图片资源
@@ -78,8 +78,8 @@ module.exports = {
           name: "[hash:10].[ext]",
           // 关闭es6模块化
           esModule: false,
-          outputPath: "imgs",
-        },
+          outputPath: "imgs"
+        }
       },
       {
         // 处理其他资源
@@ -87,27 +87,27 @@ module.exports = {
         loader: "file-loader",
         options: {
           name: "[hash:10].[ext]",
-          outputPath: "media",
-        },
-      },
-    ],
+          outputPath: "media"
+        }
+      }
+    ]
   },
   resolve: {
     alias: {
       vue$: "vue/dist/vue.esm.js",
-      "@": resolve("src"),
+      "@": resolve("src")
     },
-    extensions: ["*", ".js", ".vue", ".json"],
+    extensions: ["*", ".js", ".vue", ".json"]
   },
   devServer: {
     historyApiFallback: true,
     noInfo: true,
-    overlay: true,
+    overlay: true
   },
   performance: {
-    hints: false,
+    hints: false
   },
-  devtool: "#eval-source-map",
+  devtool: "#eval-source-map"
 };
 
 if (process.env.NODE_ENV === "production") {
@@ -116,17 +116,17 @@ if (process.env.NODE_ENV === "production") {
   module.exports.plugins = (module.exports.plugins || []).concat([
     new webpack.DefinePlugin({
       "process.env": {
-        NODE_ENV: '"production"',
-      },
+        NODE_ENV: '"production"'
+      }
     }),
     new webpack.optimize.UglifyJsPlugin({
       sourceMap: true,
       compress: {
-        warnings: false,
-      },
+        warnings: false
+      }
     }),
     new webpack.LoaderOptionsPlugin({
-      minimize: true,
-    }),
+      minimize: true
+    })
   ]);
 }

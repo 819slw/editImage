@@ -1,20 +1,27 @@
 <template>
   <div id="editImage">
     <!-- 画布 -->
-    <div class="canvasWrapper" id="canvasWrapper">
-      <canvas
-        :width="canvasObj.width"
-        :height="canvasObj.height"
-        v-if="isShowCanvas"
-        id="edit-Image-slw"
-      ></canvas>
-      <canvas
-        :width="canvasObj.width"
-        :height="canvasObj.height"
-        v-if="isShowCanvas"
-        id="edit-Image-bottom"
-      ></canvas>
+    <div id="canvasWrapperBox">
+      <div class="canvasWrapper" id="canvasWrapper">
+        <div class="notData" id="notDataslw" v-if="newImage.length == 0">
+          <i class="ri-image-fill"></i>
+          <span>{{ text }}</span>
+        </div>
+        <canvas
+          :width="canvasObj.width"
+          :height="canvasObj.height"
+          v-if="isShowCanvas"
+          id="edit-Image-slw"
+        ></canvas>
+        <canvas
+          :width="canvasObj.width"
+          :height="canvasObj.height"
+          v-if="isShowCanvas"
+          id="edit-Image-bottom"
+        ></canvas>
+      </div>
     </div>
+
     <!-- 功能按钮 -->
     <div class="eraserWrapper">
       <div class="eraserList">
@@ -39,7 +46,7 @@
       <img
         @click="switchImgIndex(index)"
         :class="{ active: nowIndex == index }"
-        v-for="(item, index) in oldImage"
+        v-for="(item, index) in newImage"
         :key="index"
         :src="item"
         alt=""
@@ -72,18 +79,22 @@ var imgDom = null;
 export default {
   name: "editImage",
   props: {
+    text: {
+      type: String,
+      default: () => "暂无数据"
+    },
     otherHeight: {
       type: Number,
-      default: () => 0,
+      default: () => 0
     },
-    value: {
-      type: "",
-      default: () => "",
+    newImage: {
+      type: Array,
+      default: () => []
     },
     oldImage: {
       type: Array,
-      default: () => [],
-    },
+      default: () => []
+    }
   },
   data() {
     return {
@@ -110,7 +121,7 @@ export default {
           icon: "ri-zoom-in-line",
           callBack: () => {
             return this.next();
-          },
+          }
         },
         {
           name: "前进",
@@ -118,7 +129,7 @@ export default {
           icon: "ri-zoom-in-line",
           callBack: () => {
             return this.last();
-          },
+          }
         },
         {
           name: "旋转",
@@ -126,7 +137,7 @@ export default {
           icon: "ri-zoom-in-line",
           callBack: () => {
             return this.tranform();
-          },
+          }
         },
         {
           name: "橡皮",
@@ -137,7 +148,7 @@ export default {
               return this._initEraser();
             }
             return null;
-          },
+          }
         },
         {
           name: "文字",
@@ -149,8 +160,8 @@ export default {
               return this._initInput(event);
             }
             return null;
-          },
-        },
+          }
+        }
         // {
         //   name: "完成",
         //   pic: "完成",
@@ -172,20 +183,36 @@ export default {
       ],
       nowClient: {
         x: 0,
-        y: 0,
+        y: 0
       },
       canvasObj: {
         width: 0,
-        height: 0,
-      },
+        height: 0
+      }
     };
   },
   watch: {
     nowIndex(n) {
       this.initCanvasContext();
     },
+    oldImage: {
+      handler() {
+        if (this.nowIndex == 0) {
+          this.initCanvasContext();
+        } else {
+          this.nowIndex = 0;
+        }
+      },
+      immediate: true,
+      deep: true
+    }
   },
   mounted() {
+    // 打印 - 方便确认开发者传递的数据是否有问题
+    console.log("oldImage:", this.oldImage);
+    console.log("newImage:", this.newImage);
+    console.log("text:", this.text);
+
     //首先第一步是设置canvas的高度和宽度
     // 首先是获取最外层容器的宽度:w1和高度:h1
     let dom = document.querySelector("#editImage");
@@ -199,6 +226,16 @@ export default {
     resultImgDom.style.width = this.cw1 + "px";
     resultImgDom.style.height = this.ch1 + "px";
 
+    let canvasWrapperBox = document.querySelector("#canvasWrapperBox");
+    canvasWrapperBox.style.width = this.cw1 + "px";
+    canvasWrapperBox.style.height = this.ch1 + "px";
+
+    let notDataslw = document.querySelector("#notDataslw");
+    if (notDataslw) {
+      notDataslw.style.width = this.cw1 + "px";
+      notDataslw.style.height = this.ch1 + "px";
+    }
+
     this.$nextTick(() => {
       this.initCanvasContext();
     });
@@ -207,22 +244,30 @@ export default {
   methods: {
     setImgBase64() {
       if (this.isDrawed) {
-        this.$emit("setImgBase64", this.saveImg(), this.nowIndex);
+        this.$emit("setImgBase64", {
+          key: this.nowIndex,
+          val: this.getBase64()
+        });
       }
     },
     switchImgIndex(index) {
       this.nowIndex = index;
     },
+    clearCanvas() {
+      ctxSlw1.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
+      ctxSlw.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
+    },
     switchImg(type) {
+      this.setImgBase64();
+      this.clearCanvas();
       if (type == 0) {
         this.nowIndex = this.nowIndex - 1 > -1 ? this.nowIndex - 1 : 0;
       } else {
         this.nowIndex =
-          this.nowIndex + 1 <= this.oldImage.length - 1
+          this.nowIndex + 1 <= this.newImage.length - 1
             ? this.nowIndex + 1
-            : this.oldImage.length - 1;
+            : this.newImage.length - 1;
       }
-      this.setImgBase64();
     },
     initCanvasContext() {
       // 初始化一些变量
@@ -247,7 +292,7 @@ export default {
           this._initFun();
         });
       };
-      img.src = this.oldImage[this.nowIndex];
+      img.src = this.newImage[this.nowIndex];
     },
     next() {
       this.recordOperate(0);
@@ -289,7 +334,7 @@ export default {
       // let dom1 = document.querySelector("#edit-Image-slw");
       // dom1.style.transform = `rotate(${this.rotateDeg}deg)`;
     },
-    saveImg() {
+    getBase64() {
       if (this.isDrawed) {
         ctxSlw1.drawImage(domCanvas, 0, 0);
         let base64 = domCanvas1.toDataURL();
@@ -297,6 +342,12 @@ export default {
       } else {
         return "";
       }
+    },
+    saveImg() {
+      return {
+        key: this.nowIndex,
+        val: this.getBase64()
+      };
     },
     watchScreen() {
       let dom = document.querySelector("#editImage");
@@ -325,6 +376,7 @@ export default {
         this.getBoundingClientRect(this.nowClient.x, this.nowClient.y).x,
         this.getBoundingClientRect(this.nowClient.x, this.nowClient.y).y
       );
+      this.isShowInput = false;
     },
     // 初始化 input框
     _initInput(event) {
@@ -334,11 +386,16 @@ export default {
         let inputDom = document.getElementById("inputWrapper");
         let that = this;
 
-        domCanvas.onmousedown = (e) => {
+        domCanvas.onmousedown = e => {
           this.nowClient.x = e.offsetX;
           this.nowClient.y = e.offsetY;
           inputDom.style.left = e.offsetX + "px";
           inputDom.style.top = e.offsetY + "px";
+          // input 获取焦点
+          setTimeout(() => {
+            let input = document.getElementById("ctxInput");
+            input.focus();
+          }, 30);
         };
       });
     },
@@ -351,14 +408,14 @@ export default {
       // ctxSlw.strokeStyle = "#000"; //画笔颜色
       ctxSlw.globalCompositeOperation = "destination-out";
       let drawing = false;
-      domCanvas.onmousedown = function (e) {
+      domCanvas.onmousedown = function(e) {
         var first = that.getBoundingClientRect(e.offsetX, e.offsetY);
         ctxSlw.save();
         ctxSlw.beginPath();
         ctxSlw.moveTo(first.x, first.y);
         drawing = true;
       };
-      domCanvas.onmousemove = function (e) {
+      domCanvas.onmousemove = function(e) {
         if (drawing) {
           var move = that.getBoundingClientRect(e.offsetX, e.offsetY);
           ctxSlw.save();
@@ -367,10 +424,10 @@ export default {
           ctxSlw.restore();
         }
       };
-      domCanvas.onmouseup = function () {
+      domCanvas.onmouseup = function() {
         drawing = false;
       };
-      domCanvas.onmouseleave = function () {
+      domCanvas.onmouseleave = function() {
         drawing = false;
         domCanvas.onmouseup();
       };
@@ -380,7 +437,7 @@ export default {
       let penWeight = 2;
       let penColor = "red";
       let that = this;
-      domCanvas.onmousedown = (e) => {
+      domCanvas.onmousedown = e => {
         var start_x =
           e.offsetX - domCanvas.offsetLeft + document.body.scrollLeft;
         var start_y = e.offsetY - domCanvas.offsetTop + document.body.scrollTop;
@@ -393,9 +450,9 @@ export default {
         ctxSlw.strokeStyle = penColor; //画笔颜色
         ctxSlw.lineWidth = penWeight; //画笔粗细
 
-        domCanvas.onmousemove = function (e) {
+        domCanvas.onmousemove = function(e) {
           // 开始绘制意味着我需要提供出去base64
-          this.isDrawed = true;
+          that.isDrawed = true;
 
           /*找到鼠标（画笔）的坐标*/
 
@@ -407,7 +464,7 @@ export default {
           ctxSlw.stroke(); //立即渲染
         };
 
-        domCanvas.onmouseup = function () {
+        domCanvas.onmouseup = function() {
           ctxSlw.closePath(); //结束本次绘画
           domCanvas.onmousemove = null;
           domCanvas.onmouseup = null;
@@ -429,7 +486,7 @@ export default {
           that.operateIndex = that.recordCanvasData.length - 1;
         };
 
-        domCanvas.onmouseleave = function () {
+        domCanvas.onmouseleave = function() {
           ctxSlw.closePath();
           domCanvas.onmousemove = null;
           domCanvas.onmouseup = null;
@@ -437,10 +494,10 @@ export default {
       };
 
       // 缩放
-      domCanvas.onmousewheel = domCanvas.onwheel = function (event) {
+      domCanvas.onmousewheel = domCanvas.onwheel = function(event) {
         let pos = {
           x: event.offsetX,
-          y: event.offsetY,
+          y: event.offsetY
         };
         if (event.wheelDelta > 0) {
           that.imgScale += 0.1;
@@ -473,7 +530,7 @@ export default {
     getBoundingClientRect(x, y) {
       return {
         x: x - domCanvas.offsetLeft + document.body.scrollLeft,
-        y: y - domCanvas.offsetTop + document.body.scrollTop,
+        y: y - domCanvas.offsetTop + document.body.scrollTop
       };
     },
     fillImgToCanvas(oldImgDom) {
@@ -512,15 +569,13 @@ export default {
         }
         this.isCanvas = true;
       };
-    },
-  },
+    }
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 #editImage {
-  // width: 1036px;
-  // height: 645px;
   width: 100%;
   height: 100%;
   background: rgba(0, 0, 0, 0.5);
@@ -528,6 +583,43 @@ export default {
   padding: 16px;
   position: relative;
   box-sizing: border-box;
+  .notData {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: #777f92;
+
+    i {
+      font-size: 50px;
+      color: #c0c4cc;
+    }
+    span {
+      padding-top: 24px;
+      color: #ffffff;
+      font-size: 18px;
+    }
+  }
+  .loading {
+    font-size: 50px;
+    color: #fff;
+    transition: 0.5s;
+    // transform-origin: 30px 30px;
+    animation: rotate 5s linear infinite;
+  }
+
+  @keyframes rotate {
+    0% {
+      transform: rotate(0);
+    }
+    50% {
+      transform: rotate(360deg);
+    }
+    100% {
+      transform: rotate(0);
+    }
+  }
+
   .switchBtnL {
     left: 32px;
   }
@@ -554,10 +646,18 @@ export default {
   #resultImg {
     width: auto;
     height: auto;
+    position: fixed;
+    top: 9999px;
+  }
+  #canvasWrapperBox {
+    overflow: hidden;
   }
   .canvasWrapper {
+    width: 100%;
+    height: 100%;
     position: relative;
     transition: all 0.2s ease;
+    overflow: hidden;
     #edit-Image-bottom {
       position: absolute;
       left: 0;
@@ -574,23 +674,22 @@ export default {
   #inputWrapper {
     display: flex;
     justify-content: center;
-    padding: 3px;
-    position: fixed;
-    background: #fff;
+    position: absolute;
+    background: rgba(0, 0, 0, 0.5);
     z-index: 10002;
     .operatBtn {
-      font-size: 12px;
-      background: #eee;
-      border-radius: 3px;
-      margin-left: 10px;
+      font-size: 10px;
+      background: #fa541c;
+      color: #fff;
       padding: 3px 5px;
       cursor: pointer;
+      margin-left: 10px;
     }
     #ctxInput {
       background: rgba(0, 0, 0, 0);
       outline: none;
-      border: 1px solid #000;
       width: 200px;
+      border: none;
       height: 20px;
       color: red;
       font-size: 16px;

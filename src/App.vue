@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-07-29 17:59:12
- * @LastEditTime: 2021-07-29 11:52:30
+ * @LastEditTime: 2021-08-04 14:47:44
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /editImage/src/App.vue
@@ -10,9 +10,11 @@
   <div id="app">
     <!-- <editImage :oldImage="img" model.sync="base64Src"></editImage> -->
     <editImage
+      :newImage="img"
       :oldImage="img"
       v-model="base64Src"
       @closeDialog="closeDialog"
+      @setImgBase64="setImgBase64"
     ></editImage>
   </div>
 </template>
@@ -21,23 +23,31 @@
 export default {
   name: "app",
   watch: {
-    base64Src: function (n, o) {
+    base64Src: function(n, o) {
       console.log(n);
-    },
+    }
   },
   methods: {
-    closeDialog() {},
+    setImgBase64(index) {
+      console.log(index);
+    },
+    closeDialog() {}
+  },
+  mounted() {
+    setTimeout(() => {
+      this.img = [
+        "https://file.znclass.com/16279722204331的副本2.png",
+        "https://t7.baidu.com/it/u=2621658848,3952322712&fm=193&f=GIF"
+      ];
+    }, 1);
   },
   data() {
     return {
       base64Src: "",
       // img: require('./assets/timg.jpg')
-      img: [
-        "https://gimg2.baidu.com/image_search/src=http%3A%2F%2Fp9.itc.cn%2Fq_70%2Fimages03%2F20200617%2F2f6e3e2d00764c27999622c29e250158.jpeg&refer=http%3A%2F%2Fp9.itc.cn&app=2002&size=f9999,10000&q=a80&n=0&g=0n&fmt=jpeg?sec=1630119615&t=de73163905499a0c9e0d3fdf303a533b",
-        "https://t7.baidu.com/it/u=2621658848,3952322712&fm=193&f=GIF",
-      ],
+      img: []
     };
-  },
+  }
 };
 </script>
 
@@ -50,6 +60,7 @@ export default {
   color: #2c3e50;
   width: 100%;
   height: 100%;
+  margin-top: 100px;
 }
 body {
   padding: 0;
