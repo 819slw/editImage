@@ -1,7 +1,7 @@
 <!--
  * @Author: your name
  * @Date: 2020-07-29 17:59:12
- * @LastEditTime: 2021-08-04 14:47:44
+ * @LastEditTime: 2021-08-05 14:01:34
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /editImage/src/App.vue
@@ -60,7 +60,6 @@ export default {
   color: #2c3e50;
   width: 100%;
   height: 100%;
-  margin-top: 100px;
 }
 body {
   padding: 0;

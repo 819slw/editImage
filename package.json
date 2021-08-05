@@ -1,8 +1,8 @@
 {
   "name": "edit-draw-image",
   "main": "dist/editImage.js",
-  "description": "完善文字问题",
-  "version": "1.0.22",
+  "description": "完善橡皮引起的bug",
+  "version": "1.0.23",
   "author": "slw <3289360550@qq.com>",
   "license": "MIT",
   "private": false,
