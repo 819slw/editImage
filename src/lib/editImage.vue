@@ -98,11 +98,13 @@ export default {
   },
   data() {
     return {
+      canvasBaseDom: null,
+      wheelTimer: true,
       isDrawed: false,
       cw1: 0,
       ch1: 0,
       nowIndex: 0,
-      isCanvas: true, // 是否可以绘制。考虑到是两层canvas
+      isCanvas: true, // 是否可以绘制。考虑到是两层canvas所需的渲染时间，所以加一个状态去延迟一下
       rotateDeg: 0,
       isShowInput: false,
       isAllow: false,
@@ -115,6 +117,14 @@ export default {
       operateIndex: -1,
 
       eraserList: [
+        {
+          name: "画笔",
+          pic: "画笔",
+          icon: "ri-zoom-in-line",
+          callBack: () => {
+            return this._initFun();
+          }
+        },
         {
           name: "后退",
           pic: "后退",
@@ -213,7 +223,7 @@ export default {
     console.log("newImage:", this.newImage);
     console.log("text:", this.text);
 
-    //首先第一步是设置canvas的高度和宽度
+    // 首先第一步是设置canvas的高度和宽度
     // 首先是获取最外层容器的宽度:w1和高度:h1
     let dom = document.querySelector("#editImage");
     let w1 = dom.clientWidth;
@@ -242,6 +252,7 @@ export default {
     this.watchScreen();
   },
   methods: {
+    // 主动回调开发者的方法
     setImgBase64() {
       if (this.isDrawed) {
         this.$emit("setImgBase64", {
@@ -250,13 +261,17 @@ export default {
         });
       }
     },
+    // 切换图片
     switchImgIndex(index) {
       this.nowIndex = index;
     },
+    // 清空关于画布的操作
     clearCanvas() {
       ctxSlw1.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
       ctxSlw.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
+      this.canvasBaseDom = null;
     },
+    // 切换图片
     switchImg(type) {
       this.setImgBase64();
       this.clearCanvas();
@@ -269,6 +284,7 @@ export default {
             : this.newImage.length - 1;
       }
     },
+    // 首次描绘画布
     initCanvasContext() {
       // 初始化一些变量
       this.isDrawed = false;
@@ -294,12 +310,15 @@ export default {
       };
       img.src = this.newImage[this.nowIndex];
     },
+    // 下一步
     next() {
       this.recordOperate(0);
     },
+    // 上一步
     last() {
       this.recordOperate(1);
     },
+    // 前进后退的问题
     recordOperate(val) {
       if (val == 1) {
         if (this.operateIndex < this.recordCanvasData.length - 1) {
@@ -320,6 +339,7 @@ export default {
       ctxSlw.putImageData(this.recordCanvasData[this.operateIndex], 0, 0);
       // this.$emit('setRenderCanvasBase64', this.nowDomCanvas.toDataURL('image/png').split('base64,')[1])
     },
+    // 旋转
     tranform() {
       if (this.rotateDeg == 360) {
         this.rotateDeg = 0;
@@ -334,6 +354,7 @@ export default {
       // let dom1 = document.querySelector("#edit-Image-slw");
       // dom1.style.transform = `rotate(${this.rotateDeg}deg)`;
     },
+    // 获取base64 数据
     getBase64() {
       if (this.isDrawed) {
         ctxSlw1.drawImage(domCanvas, 0, 0);
@@ -343,12 +364,14 @@ export default {
         return "";
       }
     },
+    // 开发者主动调用获取图片base64
     saveImg() {
       return {
         key: this.nowIndex,
         val: this.getBase64()
       };
     },
+    // 监控屏幕变化
     watchScreen() {
       let dom = document.querySelector("#editImage");
       window.onresize = () => {
@@ -356,18 +379,23 @@ export default {
         let screenHeight = dom.clientHeight;
       };
     },
+    // 废弃 方法
     cancleDialog() {
       this.$emit("closeDialog");
     },
+    // 废弃 方法
     getBaseContent() {
       this.$emit("input", domCanvas.toDataURL());
     },
+    // 取消添加文字
     cancleInput() {
       let inputDom = document.getElementById("ctxInput");
       inputDom.value = "";
       this.isShowInput = false;
     },
+    // 确认把文字描绘到画布上
     confrimInput() {
+      this.clearCanvasBase();
       let inputDom = document.getElementById("ctxInput");
       ctxSlw.font = "bold 24px sans-serif";
       ctxSlw.fillStyle = "red";
@@ -402,10 +430,10 @@ export default {
     // 初始化 橡皮
     _initEraser() {
       let that = this;
+      that.clearCanvasBase();
       ctxSlw.lineWidth = 20;
       ctxSlw.lineCap = "round";
       ctxSlw.lineJoin = "round";
-      // ctxSlw.strokeStyle = "#000"; //画笔颜色
       ctxSlw.globalCompositeOperation = "destination-out";
       let drawing = false;
       domCanvas.onmousedown = function(e) {
@@ -432,12 +460,17 @@ export default {
         domCanvas.onmouseup();
       };
     },
+    // 清空放大小时 的 图片依据
+    clearCanvasBase() {
+      this.canvasBaseDom = null;
+    },
     // 初始化绘画曲线
     _initFun() {
       let penWeight = 2;
       let penColor = "red";
       let that = this;
       domCanvas.onmousedown = e => {
+        that.clearCanvasBase();
         var start_x =
           e.offsetX - domCanvas.offsetLeft + document.body.scrollLeft;
         var start_y = e.offsetY - domCanvas.offsetTop + document.body.scrollTop;
@@ -449,6 +482,7 @@ export default {
         ctxSlw.lineJoin = "round";
         ctxSlw.strokeStyle = penColor; //画笔颜色
         ctxSlw.lineWidth = penWeight; //画笔粗细
+        ctxSlw.globalCompositeOperation = "source-over";
 
         domCanvas.onmousemove = function(e) {
           // 开始绘制意味着我需要提供出去base64
@@ -495,6 +529,10 @@ export default {
 
       // 缩放
       domCanvas.onmousewheel = domCanvas.onwheel = function(event) {
+        // 缩放时 需要把画布上的内容先拿出来作为基础再去放大缩小
+
+        if (!that.isCanvas) return;
+        that.isCanvas = false;
         let pos = {
           x: event.offsetX,
           y: event.offsetY
@@ -524,7 +562,17 @@ export default {
           that.imgX = pos.x - resX;
           that.imgY = pos.y - resY;
         }
-        that.fillImgToCanvas();
+        if (that.canvasBaseDom) {
+          that.fillImgToCanvas();
+        } else {
+          let base64 = domCanvas.toDataURL();
+          let imgdom = document.querySelector("#resultImg");
+          imgdom.onload = () => {
+            that.canvasBaseDom = imgdom;
+            that.fillImgToCanvas();
+          };
+          imgdom.src = base64; //和 573行的代码 换一下
+        }
       };
     },
     getBoundingClientRect(x, y) {
@@ -535,15 +583,15 @@ export default {
     },
     fillImgToCanvas(oldImgDom) {
       if (!ctxSlw1) return;
-      if (!this.isCanvas) return;
-      let base64 = domCanvas.toDataURL();
-      let imgdom = document.querySelector("#resultImg");
-      imgdom.src = base64;
-      imgdom.onload = () => {
-        ctxSlw1.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
-        ctxSlw.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
+      ctxSlw.globalCompositeOperation = "source-over";
+      ctxSlw.lineWidth = 2;
+      ctxSlw.strokeStyle = "red";
+      ctxSlw1.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
+      ctxSlw.clearRect(0, 0, this.canvasObj.width, this.canvasObj.height);
+      if (this.canvasBaseDom) {
+        // 画布的重新绘制
         ctxSlw.drawImage(
-          imgdom,
+          this.canvasBaseDom,
           0,
           0,
           this.canvasObj.width,
@@ -553,22 +601,25 @@ export default {
           this.canvasObj.width * this.imgScale,
           this.canvasObj.height * this.imgScale
         );
-        ctxSlw1.drawImage(
-          oldImgDom ? oldImgDom : imgDom,
-          0,
-          0,
-          this.canvasObj.width,
-          this.canvasObj.height,
-          this.imgX,
-          this.imgY, //在画布上放置图像的 x 、y坐标位置。
-          this.canvasObj.width * this.imgScale,
-          this.canvasObj.height * this.imgScale
-        );
-        if (oldImgDom) {
-          imgDom = oldImgDom;
-        }
+      }
+
+      ctxSlw1.drawImage(
+        oldImgDom ? oldImgDom : imgDom,
+        0,
+        0,
+        this.canvasObj.width,
+        this.canvasObj.height,
+        this.imgX,
+        this.imgY, //在画布上放置图像的 x 、y坐标位置。
+        this.canvasObj.width * this.imgScale,
+        this.canvasObj.height * this.imgScale
+      );
+      if (oldImgDom) {
+        imgDom = oldImgDom;
+      }
+      setTimeout(() => {
         this.isCanvas = true;
-      };
+      }, 100);
     }
   }
 };
@@ -647,7 +698,9 @@ export default {
     width: auto;
     height: auto;
     position: fixed;
-    top: 9999px;
+    bottom: 9999px;
+    // bottom: 100px;
+    z-index: 999999;
   }
   #canvasWrapperBox {
     overflow: hidden;
