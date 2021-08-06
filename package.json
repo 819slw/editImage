@@ -1,8 +1,8 @@
 {
   "name": "edit-draw-image",
   "main": "dist/editImage.js",
-  "description": "优化图片越界的问题",
-  "version": "1.0.26",
+  "description": "添加自适应",
+  "version": "1.0.27",
   "author": "slw <3289360550@qq.com>",
   "license": "MIT",
   "private": false,
