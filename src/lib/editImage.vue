@@ -124,7 +124,8 @@ export default {
       imgY: 0,
       recordCanvasData: [],
       operateIndex: -1,
-
+      trueImgInfo: {},
+      trueimgScale: 1,
       eraserList: [
         {
           name: "涂鸦",
@@ -311,13 +312,16 @@ export default {
 
       img.onload = () => {
         // 需要处理图片的适应问题
-        let trueImgW = img.naturalWidth;
-        let trueImgH = img.naturalHeight;
+        this.trueImgInfo.trueImgW = img.naturalWidth;
+        this.trueImgInfo.trueImgH = img.naturalHeight;
 
-        if (trueImgW > trueImgH) {
-          if (trueImgW > this.cw1) {
-            // this.imgScale = this.cw1 / trueImgW;
-            // console.log(this.imgScale);
+        if (img.naturalWidth > img.naturalHeight) {
+          if (img.naturalWidth > this.cw1) {
+            this.trueimgScale = this.cw1 / img.naturalWidth;
+          }
+        } else {
+          if (img.naturalHeight > this.ch1) {
+            this.trueimgScale = this.ch1 / img.naturalHeight;
           }
         }
 
@@ -636,16 +640,19 @@ export default {
       }
 
       ctxSlw1.drawImage(
+        // 图片的大小
         oldImgDom ? oldImgDom : imgDom,
         0,
         0,
-        this.canvasObj.width,
-        this.canvasObj.height,
+        this.trueImgInfo.trueImgW,
+        this.trueImgInfo.trueImgH,
         this.imgX,
         this.imgY, //在画布上放置图像的 x 、y坐标位置。
-        this.canvasObj.width * this.imgScale,
-        this.canvasObj.height * this.imgScale
+        this.trueImgInfo.trueImgW * this.imgScale * this.trueimgScale,
+        this.trueImgInfo.trueImgH * this.imgScale * this.trueimgScale
       );
+      console.log(this.canvasObj.width);
+      console.log(this.canvasObj.width * this.imgScale);
       if (oldImgDom) {
         imgDom = oldImgDom;
       }
