@@ -1,7 +1,7 @@
 /*
  * @Author: your name
  * @Date: 2020-07-29 17:59:12
- * @LastEditTime: 2021-08-05 14:42:05
+ * @LastEditTime: 2021-08-06 08:39:05
  * @LastEditors: Please set LastEditors
  * @Description: In User Settings Edit
  * @FilePath: /editImage/webpack.config.js
@@ -106,8 +106,8 @@ module.exports = {
   },
   performance: {
     hints: false
-  },
-  devtool: "#eval-source-map"
+  }
+  // devtool: "none"
 };
 
 if (process.env.NODE_ENV === "production") {
@@ -120,7 +120,7 @@ if (process.env.NODE_ENV === "production") {
       }
     }),
     new webpack.optimize.UglifyJsPlugin({
-      sourceMap: true,
+      // sourceMap: true,
       compress: {
         warnings: false
       }

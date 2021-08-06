@@ -53,10 +53,18 @@
       />
     </div>
     <!-- 切换图片 -->
-    <div @click="switchImg(0)" class="switchBtn switchBtnL">
+    <div
+      v-if="newImage.length > 1"
+      @click="switchImg(0)"
+      class="switchBtn switchBtnL"
+    >
       <i class="ri-arrow-left-s-line"></i>
     </div>
-    <div @click="switchImg(1)" class="switchBtn switchBtnR">
+    <div
+      v-if="newImage.length > 1"
+      @click="switchImg(1)"
+      class="switchBtn switchBtnR"
+    >
       <i class="ri-arrow-right-s-line"></i>
     </div>
     <!-- 输入框 -->
@@ -98,6 +106,7 @@ export default {
   },
   data() {
     return {
+      resiezeTimer: null,
       canvasBaseDom: null,
       wheelTimer: true,
       isDrawed: false,
@@ -118,17 +127,18 @@ export default {
 
       eraserList: [
         {
-          name: "画笔",
-          pic: "画笔",
-          icon: "ri-zoom-in-line",
+          name: "涂鸦",
+          pic: "涂鸦",
+          icon: "ri-pencil-line",
           callBack: () => {
+            ctxSlw.globalCompositeOperation = "source-over";
             return this._initFun();
           }
         },
         {
           name: "后退",
           pic: "后退",
-          icon: "ri-zoom-in-line",
+          icon: "ri-arrow-go-back-line",
           callBack: () => {
             return this.next();
           }
@@ -136,7 +146,7 @@ export default {
         {
           name: "前进",
           pic: "前进",
-          icon: "ri-zoom-in-line",
+          icon: "ri-arrow-go-forward-line",
           callBack: () => {
             return this.last();
           }
@@ -144,7 +154,7 @@ export default {
         {
           name: "旋转",
           pic: "旋转",
-          icon: "ri-zoom-in-line",
+          icon: "ri-anticlockwise-2-line",
           callBack: () => {
             return this.tranform();
           }
@@ -152,7 +162,7 @@ export default {
         {
           name: "橡皮",
           pic: "橡皮",
-          icon: "ri-zoom-in-line",
+          icon: "ri-eraser-line",
           callBack: () => {
             if (this.isAllow) {
               return this._initEraser();
@@ -163,10 +173,11 @@ export default {
         {
           name: "文字",
           pic: "文字",
-          icon: "ri-zoom-in-line",
+          icon: "ri-t-box-line",
           callBack: () => {
             if (this.isAllow) {
               // input框 使用的是外部的input和内部的绘制文字结合实现
+              ctxSlw.globalCompositeOperation = "source-over";
               return this._initInput(event);
             }
             return null;
@@ -222,36 +233,38 @@ export default {
     console.log("oldImage:", this.oldImage);
     console.log("newImage:", this.newImage);
     console.log("text:", this.text);
-
-    // 首先第一步是设置canvas的高度和宽度
-    // 首先是获取最外层容器的宽度:w1和高度:h1
-    let dom = document.querySelector("#editImage");
-    let w1 = dom.clientWidth;
-    let h1 = dom.clientHeight;
-    // 拿到w1和w2之后，计算出canvas的实际宽度:cw1和高度ch1
-    this.cw1 = w1 - 32; // 根据UI的设定减去两边的padding: 16px
-    this.ch1 = h1 - 96 - this.otherHeight; // 96 是底部的工作区， this.otherHeight是顶部你们slot插入的容器高度，默认是0
-
-    let resultImgDom = document.querySelector("#resultImg");
-    resultImgDom.style.width = this.cw1 + "px";
-    resultImgDom.style.height = this.ch1 + "px";
-
-    let canvasWrapperBox = document.querySelector("#canvasWrapperBox");
-    canvasWrapperBox.style.width = this.cw1 + "px";
-    canvasWrapperBox.style.height = this.ch1 + "px";
-
-    let notDataslw = document.querySelector("#notDataslw");
-    if (notDataslw) {
-      notDataslw.style.width = this.cw1 + "px";
-      notDataslw.style.height = this.ch1 + "px";
-    }
-
-    this.$nextTick(() => {
-      this.initCanvasContext();
-    });
-    this.watchScreen();
+    this.init(); // 初始化数据
+    this.watchScreen(); // 设置屏幕监控
   },
   methods: {
+    init() {
+      // 首先第一步是设置canvas的高度和宽度
+      // 首先是获取最外层容器的宽度:w1和高度:h1
+      let dom = document.querySelector("#editImage");
+      let w1 = dom.clientWidth;
+      let h1 = dom.clientHeight;
+      // 拿到w1和w2之后，计算出canvas的实际宽度:cw1和高度ch1
+      this.cw1 = w1 - 32; // 根据UI的设定减去两边的padding: 16px
+      this.ch1 = h1 - 96 - this.otherHeight; // 96 是底部的工作区， this.otherHeight是顶部你们slot插入的容器高度，默认是0
+
+      let resultImgDom = document.querySelector("#resultImg");
+      resultImgDom.style.width = this.cw1 + "px";
+      resultImgDom.style.height = this.ch1 + "px";
+
+      let canvasWrapperBox = document.querySelector("#canvasWrapperBox");
+      canvasWrapperBox.style.width = this.cw1 + "px";
+      canvasWrapperBox.style.height = this.ch1 + "px";
+
+      let notDataslw = document.querySelector("#notDataslw");
+      if (notDataslw) {
+        notDataslw.style.width = this.cw1 + "px";
+        notDataslw.style.height = this.ch1 + "px";
+      }
+
+      this.$nextTick(() => {
+        this.initCanvasContext();
+      });
+    },
     // 主动回调开发者的方法
     setImgBase64() {
       if (this.isDrawed) {
@@ -273,15 +286,19 @@ export default {
     },
     // 切换图片
     switchImg(type) {
-      this.setImgBase64();
-      this.clearCanvas();
       if (type == 0) {
         this.nowIndex = this.nowIndex - 1 > -1 ? this.nowIndex - 1 : 0;
+        if (this.nowIndex - 1 > -1) {
+          this.nowIndex = this.nowIndex - 1;
+          this.setImgBase64();
+          this.clearCanvas();
+        }
       } else {
-        this.nowIndex =
-          this.nowIndex + 1 <= this.newImage.length - 1
-            ? this.nowIndex + 1
-            : this.newImage.length - 1;
+        if (this.nowIndex + 1 <= this.newImage.length - 1) {
+          this.nowIndex = this.nowIndex + 1;
+          this.setImgBase64();
+          this.clearCanvas();
+        }
       }
     },
     // 首次描绘画布
@@ -291,9 +308,22 @@ export default {
 
       let img = new Image();
       img.setAttribute("crossOrigin", "anonymous");
+
       img.onload = () => {
+        // 需要处理图片的适应问题
+        let trueImgW = img.naturalWidth;
+        let trueImgH = img.naturalHeight;
+
+        if (trueImgW > trueImgH) {
+          if (trueImgW > this.cw1) {
+            // this.imgScale = this.cw1 / trueImgW;
+            // console.log(this.imgScale);
+          }
+        }
+
         this.canvasObj.width = this.cw1;
         this.canvasObj.height = this.ch1;
+
         this.isShowCanvas = true;
         this.$nextTick(() => {
           //  获取 画布canvas
@@ -373,10 +403,12 @@ export default {
     },
     // 监控屏幕变化
     watchScreen() {
-      let dom = document.querySelector("#editImage");
+      // initCanvasContext
       window.onresize = () => {
-        let screenWidth = dom.clientWidth;
-        let screenHeight = dom.clientHeight;
+        clearTimeout(this.resiezeTimer);
+        this.resiezeTimer = setTimeout(() => {
+          this.init();
+        }, 100);
       };
     },
     // 废弃 方法
